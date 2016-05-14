@@ -14,7 +14,7 @@
 // Download glut from: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
 
-#include "mesh.h"
+#include "Mesh.h"
 #include <cstdio>
 #include <sstream>
 

@@ -25,7 +25,7 @@ if(NOT OPENGL_FOUND)
     message(ERROR " OPENGL not found!")
 endif(NOT OPENGL_FOUND)
 
-set(SOURCE_FILES main.cpp float2.h float3.h Mesh.h Mesh.cpp stb_image.c)
+set(SOURCE_FILES src/main.cpp src/float2.h src/float3.h src/Objects/Mesh.h src/Objects/Mesh.cpp src/stb_image.c src/Objects/ObjectCollection.cpp src/Objects/ObjectCollection.h src/Objects/Object.cpp src/Objects/Object.h src/Materials/Material.cpp src/Materials/Material.h src/Materials/TexturedMaterial.cpp src/Materials/TexturedMaterial.h src/Camera.cpp src/Camera.h src/Lighting/LightSource.cpp src/Lighting/LightSource.h src/Lighting/DirectionalLight.cpp src/Lighting/DirectionalLight.h src/Lighting/PointLight.cpp src/Lighting/PointLight.h src/Objects/Billboard.cpp src/Objects/Billboard.h src/Objects/Literals/Teapot.cpp src/Objects/Literals/Teapot.h src/Objects/Literals/Ground.cpp src/Objects/Literals/Ground.h src/Objects/MeshInstance.cpp src/Objects/MeshInstance.h)
 add_executable(3DOpenGL ${SOURCE_FILES})
 
 target_link_libraries(3DOpenGL ${OPENGL_LIBRARIES} ${GLUT_LIBRARY} winmm.lib)
