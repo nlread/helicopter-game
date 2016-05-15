@@ -8,8 +8,8 @@
 
 #include <vector>
 #include <GL/glu.h>
-#include "float3.h"
-#include "float2.h"
+#include "Utility/float3.h"
+#include "Utility/float2.h"
 
 class Camera {
     friend class Billboard;

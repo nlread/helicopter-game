@@ -7,15 +7,15 @@
 
 
 #include <GL/gl.h>
-#include "../float3.h"
+#include "../Utility/float3.h"
 #include "../Camera.h"
 #include "../Materials/Material.h"
+#include "Properties/LifeSpan.h"
 
-class Billboard {
+class Billboard : public LifeSpan{
 protected:
     Material *material;
-    double lifeSpan;
-    double fadeOut;
+    double fadeOut = 1;
     double transparency = 1;
     float3 position;
     float3 scaleFactor = float3(1, 1, 1);

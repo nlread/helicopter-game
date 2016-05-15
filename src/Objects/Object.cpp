@@ -7,15 +7,16 @@
 void Object::drawShadow(float3 lightDir) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
+    {
+        glTranslatef(0, .01, 0);
+        glScalef(1, 0, 1);
 
-    glTranslatef(0, .01, 0);
-    glScalef(1, 0, 1);
+        glTranslatef(position.x, position.y, position.z);
+        glRotatef(orientationAngle, orientationAxis.x, orientationAxis.y, orientationAxis.z);
+        glScalef(scaleFactor.x, scaleFactor.y, scaleFactor.z);
 
-    glTranslatef(position.x, position.y, position.z);
-    glRotatef(orientationAngle, orientationAxis.x, orientationAxis.y, orientationAxis.z);
-    glScalef(scaleFactor.x, scaleFactor.y, scaleFactor.z);
-
-    drawModel();
+        drawModel();
+    }
     glPopMatrix();
 }
 

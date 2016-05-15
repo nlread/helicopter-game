@@ -6,7 +6,7 @@
 #define INC_3DOPENGL_MATERIAL_H
 
 
-#include "../float3.h"
+#include "../Utility/float3.h"
 
 class Material {
 public:

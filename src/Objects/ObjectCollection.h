@@ -15,28 +15,11 @@ class ObjectCollection : public Object {
 public:
     ObjectCollection(Material *material) : Object(material) { }
 
-    void draw() {
-        material->apply();
-        glMatrixMode(GL_MODELVIEW);
+    void draw();
 
-        glPushMatrix();
-        {
-            applyTransformations();
-            for (unsigned int i = 0; i < objects.size(); i++) {
-                objects.at(i)->draw();
-            }
-        }
-        glPopMatrix();
-    }
+    void drawModel();
 
-    void drawModel() {
-
-    }
-
-
-    void addObject(Object *newObject) {
-        objects.push_back(newObject);
-    }
+    void addObject(Object *newObject);
 };
 
 

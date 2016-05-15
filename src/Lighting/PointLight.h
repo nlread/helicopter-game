@@ -7,7 +7,7 @@
 
 
 #include "LightSource.h"
-#include "../float3.h"
+#include "../Utility/float3.h"
 
 class PointLight : public LightSource {
     float3 pos;

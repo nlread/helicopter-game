@@ -7,7 +7,7 @@
 
 
 #include <GL/gl.h>
-#include "../float3.h"
+#include "../Utility/float3.h"
 #include "LightSource.h"
 
 class DirectionalLight : public LightSource {

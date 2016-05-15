@@ -14,8 +14,8 @@
 // Download glut from: http://www.opengl.org/resources/libraries/glut/
 #include <GL/glut.h>
 
-#include "float2.h"
-#include "float3.h"
+#include "Utility/float2.h"
+#include "Utility/float3.h"
 #include "Objects/Mesh.h"
 #include "Materials/Material.h"
 #include "Objects/Object.h"
@@ -27,6 +27,8 @@
 #include "Lighting/DirectionalLight.h"
 #include "Objects/Literals/Ground.h"
 #include "Objects/Literals/Teapot.h"
+#include "Objects/Properties/Mover.h"
+#include "Objects/Literals/Bullet.h"
 #include <vector>
 #include <map>
 #include <stdio.h>
@@ -35,51 +37,9 @@
 extern "C" unsigned char *stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp);
 float3 gravity = float3(0, -9.8, 0);
 
-class Bouncer {
+class Helicopter : public ObjectCollection, public Mover {
 protected:
-    float3 velocity = float3(0, 0, 0);
-    float3 acceleration = float3(0, 0, 0);
-    float3 drag = float3(.6, .8, .6);
-    float angularVelocity = 0.0;
-    float angularAcceleration = 0.0;
-    float restitution = .7;
-public:
-
-    void applyAcceleration(double t, double dt) {
-        velocity += (acceleration + gravity) * dt;
-        velocity *= drag.power(dt);
-        angularVelocity += angularAcceleration * dt;
-        angularVelocity *= pow(.8, dt);
-    }
-
-    float3 calcDeltaPosition(float3 oldPosition, double t, double dt) {
-        if (oldPosition.y < 0 && velocity.y < 0) {
-            velocity.y *= -restitution;
-            if (abs(velocity.y) < .1) {
-                velocity.y = 0;
-            }
-        }
-        return velocity * dt;
-    }
-
-    float calcDeltaOrientation(float oldOrientation, double t, double dt) {
-        return angularVelocity * dt;
-    }
-
-    bool control(std::vector<bool> &keysPressed, std::vector<Object *> &spawn,
-                 std::vector<Object *> &objects) {
-
-
-    }
-
-
-};
-
-
-
-class Helicopter : public ObjectCollection, public Bouncer {
-protected:
-    float3 mainRotorOffest = float3(0, 15, 4.5);
+    float3 mainRotorOffset = float3(0, 15, 4.5);
 
     MeshInstance *body;
     MeshInstance *mainRotor;
@@ -159,10 +119,10 @@ public:
         //x and z controls
         if (keysPressed.at('u')) {
             acceleration.x = (float) (sin(orientationAngle * M_PI / 180) * 10);
-            acceleration.z = (float) (-cos(orientationAngle * M_PI / 180) * 10);
+            acceleration.z = (float) (cos(orientationAngle * M_PI / 180) * 10);
         } else if (keysPressed.at('j')) {
             acceleration.x = (float) (-sin(orientationAngle * M_PI / 180) * 10);
-            acceleration.z = (float) (cos(orientationAngle * M_PI / 180) * 10);
+            acceleration.z = (float) (-cos(orientationAngle * M_PI / 180) * 10);
         } else {
             acceleration.x = 0;
             acceleration.z = 0;
@@ -171,7 +131,8 @@ public:
         if (keysPressed.at(' ')) {
             Material *smoke = new TexturedMaterial("smoke1.png");
             for (double i = 0; i < M_PI * 2; i += .4) {
-                Billboard *b = new Billboard(position + mainRotorOffest, smoke);
+                Billboard *b = new Billboard(position + mainRotorOffset, smoke);
+                b->scale(float3(3, 3, 3));
                 b->setVelocity(float3(-cos(i) * 4, 0, sin(i) * 4));
                 b->setLifeSpan(3, 2);
                 spawnBillboard.push_back(b);
@@ -212,43 +173,29 @@ public:
         //region Materials
         Material *yellowDiffuseMaterial = new Material();
         yellowDiffuseMaterial->kd = float3(1, 1, 0);
-        Material *tiggerTexture = new TexturedMaterial("tigger.png", GL_LINEAR);
+//        Material *tiggerTexture = new TexturedMaterial("tigger.png", GL_LINEAR);
         Material *basicMaterial = new Material();
         Material *grass = new Material();
-        grass->kd = float3(0, .8, 0);
+        grass->kd = float3(0, .6, 0);
 
+        materials.push_back(grass);
         materials.push_back(yellowDiffuseMaterial);
-        materials.push_back(tiggerTexture);
+//        materials.push_back(tiggerTexture);
         materials.push_back(basicMaterial);
         //endregion
 
-        objects.push_back((new Teapot(yellowDiffuseMaterial))->translate(float3(0, -1, 0)));
-        objects.push_back((new Teapot(basicMaterial))->translate(float3(0, 1.2, 0.5))->scale(float3(1.3, 1.3, 1.3)));
-        objects.push_back((new Teapot(tiggerTexture))->translate(float3(0, -1, -2))->scale(float3(0.5, 0.5, 0.5)));
-        objects.push_back((new Ground(grass)));
-
-        Mesh *heliMesh = new Mesh("heli.obj");
-        Mesh *mainRotorMesh = new Mesh("mainrotor.obj");
-        Mesh *tailRotorMesh = new Mesh("tailrotor.obj");
-
-        Object *heli = new MeshInstance(yellowDiffuseMaterial, heliMesh);
-        Object *mainRotor = new MeshInstance(yellowDiffuseMaterial, heliMesh);
-        Object *tailRotor = new MeshInstance(yellowDiffuseMaterial, heliMesh);
-
-//        Object *bouncingHeli = new Bouncer(yellowDiffuseMaterial, heliMesh);
-//        bouncingHeli->translate(float3(0, 15, 0));
-//        objects.push_back(bouncingHeli);
-
-        Material *asteroid = new TexturedMaterial("smoke1.png");
-        billboards.push_back(new Billboard(float3(15, 10, 15), asteroid));
-        billboards.push_back(new Billboard(float3(16, 12, 15), asteroid));
-        billboards.push_back(new Billboard(float3(15, 8, 16), asteroid));
-        billboards.push_back(new Billboard(float3(15, 16, 15), asteroid));
-
+//        objects.push_back((new Teapot(yellowDiffuseMaterial))->translate(float3(0, -1, 0)));
+//        objects.push_back((new Teapot(tiggerTexture))->translate(float3(0, -1, -2))->scale(float3(0.5, 0.5, 0.5)));
+//        objects.push_back((new Teapot(basicMaterial))->translate(float3(0, 1.2, 0.5))->scale(float3(1.3, 1.3, 1.3)));
+//
+        TexturedMaterial* smoke = new TexturedMaterial("smoke.png");
         objects.push_back(new Helicopter(yellowDiffuseMaterial));
-//        objects.push_back(heli);
-//        objects.push_back(mainRotor);
-//        objects.push_back(tailRotor);
+        Bullet* bullet = new Bullet(yellowDiffuseMaterial, new Mesh("bullet.obj"));
+        bullet->rotate(M_PI/2);
+        bullet->setParticleMaterial(smoke);
+        objects.push_back(bullet);
+        Ground* ground = new Ground(grass);
+        objects.push_back(ground);
     }
 
     void addObject(Object *object) {
@@ -314,10 +261,8 @@ public:
     }
 
     void draw() {
-        glEnable(GL_LIGHTING);
-        glEnable(GL_TEXTURE_2D);
-
         camera.apply();
+
         unsigned int iLightSource = 0;
         for (; iLightSource < lightSources.size(); iLightSource++) {
             glEnable(GL_LIGHT0 + iLightSource);
@@ -335,14 +280,13 @@ public:
         for (unsigned int iObject = 0; iObject < objects.size(); iObject++) {
             objects.at(iObject)->drawShadow(float3());
         }
-
         glEnable(GL_LIGHTING);
         glEnable(GL_TEXTURE_2D);
+
         for (unsigned int iBill = 0; iBill < billboards.size(); iBill++)
             billboards.at(iBill)->draw(camera);
     }
 
-    Object *getPlane();
 };
 
 Scene scene;
@@ -425,8 +369,4 @@ int main(int argc, char **argv) {
     glutMainLoop();                                // launch event handling loop
 
     return 0;
-}
-
-Object *Scene::getPlane() {
-    return plane;
 }

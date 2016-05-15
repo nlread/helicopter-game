@@ -6,15 +6,17 @@
 #include "Material.h"
 
 void Material::apply() {
+    glDisable(GL_TEXTURE_2D);
     float aglDiffuse[] = {kd.x, kd.y, kd.z, 1.0f};
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, aglDiffuse);
     float aglSpecular[] = {kd.x, kd.y, kd.z, 1.0f};
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, aglSpecular);
-    if (shininess <= 128)
+    if (shininess <= 128) {
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-    else
+    }
+    else {
         glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 128.0f);
-    glDisable(GL_TEXTURE_2D);
+    }
 }
 
 Material::Material() {

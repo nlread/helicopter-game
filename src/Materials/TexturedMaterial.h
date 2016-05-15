@@ -11,7 +11,7 @@
 #include "Material.h"
 #include "../Objects/Object.h"
 
-extern "C" unsigned char *stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp);
+extern "C" unsigned char *stbi_load(char const *filename, int *e, int *y, int *comp, int req_comp);
 
 class TexturedMaterial : public Material {
     GLuint texture;

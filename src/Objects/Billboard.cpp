@@ -51,11 +51,13 @@ void Billboard::draw(Camera &camera) {
 
 bool Billboard::move(double t, double dt) {
     translate(velocity * dt);
-    lifeSpan -= dt;
+    if(liveForever)
+        return false;
+    age(dt);
     if(lifeSpan < fadeOut) {
         transparency = lifeSpan / fadeOut;
     }
-    return lifeSpan < 0;
+    return isAlive();
 }
 
 Billboard *Billboard::scale(float3 factor) {
