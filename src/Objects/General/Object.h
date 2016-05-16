@@ -7,8 +7,9 @@
 
 
 #include <GL/gl.h>
-#include "../Utility/float3.h"
-#include "Billboard.h"
+#include "../../Materials/Material.h"
+#include "../Billboard.h"
+#include <vector>
 
 class Object {
 protected:

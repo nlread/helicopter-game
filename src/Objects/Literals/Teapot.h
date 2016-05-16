@@ -7,7 +7,7 @@
 
 
 #include <GL/glut.h>
-#include "../Object.h"
+#include "../General/Object.h"
 
 class Teapot : public Object {
 public:

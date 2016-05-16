@@ -7,7 +7,7 @@
 
 
 #include "Object.h"
-#include "Mesh.h"
+#include "../Mesh.h"
 
 class MeshInstance : public Object {
     Mesh *mesh;

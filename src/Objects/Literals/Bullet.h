@@ -7,7 +7,7 @@
 
 
 #include <stdio.h>
-#include "../MeshInstance.h"
+#include "../General/MeshInstance.h"
 #include "../Properties/Mover.h"
 #include "../../Materials/TexturedMaterial.h"
 

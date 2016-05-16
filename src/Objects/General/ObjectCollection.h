@@ -7,7 +7,7 @@
 
 
 #include <GL/gl.h>
-#include "../Materials/Material.h"
+#include "../../Materials/Material.h"
 #include "Object.h"
 
 class ObjectCollection : public Object {
@@ -15,9 +15,9 @@ class ObjectCollection : public Object {
 public:
     ObjectCollection(Material *material) : Object(material) { }
 
-    void draw();
+    virtual void draw();
 
-    void drawModel();
+    virtual void drawModel();
 
     void addObject(Object *newObject);
 };

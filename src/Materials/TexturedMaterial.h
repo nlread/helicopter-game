@@ -9,7 +9,7 @@
 #include <GL/gl.h>
 #include <stddef.h>
 #include "Material.h"
-#include "../Objects/Object.h"
+#include "../Objects/General/Object.h"
 
 extern "C" unsigned char *stbi_load(char const *filename, int *e, int *y, int *comp, int req_comp);
 

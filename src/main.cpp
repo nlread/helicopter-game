@@ -18,17 +18,18 @@
 #include "Utility/float3.h"
 #include "Objects/Mesh.h"
 #include "Materials/Material.h"
-#include "Objects/Object.h"
+#include "Objects/General/Object.h"
 #include "Materials/TexturedMaterial.h"
 #include "Camera.h"
-#include "Objects/ObjectCollection.h"
-#include "Objects/MeshInstance.h"
+#include "Objects/General/ObjectCollection.h"
+#include "Objects/General/MeshInstance.h"
 #include "Lighting/PointLight.h"
 #include "Lighting/DirectionalLight.h"
 #include "Objects/Literals/Ground.h"
 #include "Objects/Literals/Teapot.h"
 #include "Objects/Properties/Mover.h"
 #include "Objects/Literals/Bullet.h"
+#include "Objects/Properties/HeliCam.h"
 #include <vector>
 #include <map>
 #include <stdio.h>
@@ -37,16 +38,18 @@
 extern "C" unsigned char *stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp);
 float3 gravity = float3(0, -9.8, 0);
 
-class Helicopter : public ObjectCollection, public Mover {
+class Helicopter : public ObjectCollection, public Mover, public HeliCam {
 protected:
     float3 mainRotorOffset = float3(0, 15, 4.5);
 
     MeshInstance *body;
     MeshInstance *mainRotor;
     MeshInstance *tailRotor;
+    double forwardTilt;
     bool playingSound = false;
     bool engineOn = false;
     bool mayToggleEngine = true;
+    bool soundPlaying = false;
 
 public:
     Helicopter(Material *material) : ObjectCollection(material) {
@@ -66,10 +69,31 @@ public:
         addObject(tailRotor);
     }
 
+    virtual void draw() {
+        glPushMatrix();
+        {
+            ObjectCollection::draw();
+            orientationAxis = float3(1, 0, 0);
+            glRotatef(forwardTilt, orientationAxis.x, orientationAxis.y, orientationAxis.z);
+            orientationAxis = float3(0, 1, 0);
+        }
+        glPopMatrix();
+     }
+
     void move(double t, double dt) {
         if (engineOn) {
             mainRotor->orientationAngle += 20;
             tailRotor->orientationAngle += 20;
+
+            if(!soundPlaying) {
+                PlaySound(TEXT("sounds/coploop5.wav"), NULL ,SND_FILENAME | SND_ASYNC | SND_LOOP);
+                soundPlaying = true;
+            }
+        } else {
+            if(soundPlaying) {
+                PlaySound(NULL, 0, SND_ASYNC);
+                soundPlaying = false;
+            }
         }
 
         applyAcceleration(t, dt);
@@ -118,11 +142,12 @@ public:
 
         //x and z controls
         if (keysPressed.at('u')) {
-            acceleration.x = (float) (sin(orientationAngle * M_PI / 180) * 10);
-            acceleration.z = (float) (cos(orientationAngle * M_PI / 180) * 10);
+            acceleration.x = (float) (getXDir() * 10);
+            acceleration.z = (float) (getZDir() * 10);
+            forwardTilt = 20;
         } else if (keysPressed.at('j')) {
-            acceleration.x = (float) (-sin(orientationAngle * M_PI / 180) * 10);
-            acceleration.z = (float) (-cos(orientationAngle * M_PI / 180) * 10);
+            acceleration.x = (float) (-getXDir() * 10);
+            acceleration.z = (float) (-getZDir() * 10);
         } else {
             acceleration.x = 0;
             acceleration.z = 0;
@@ -137,8 +162,30 @@ public:
                 b->setLifeSpan(3, 2);
                 spawnBillboard.push_back(b);
             }
+            PlaySound(TEXT("sounds/machgun2.wav"), NULL, SND_ASYNC);
         }
         return false;
+    }
+
+    double getXDir() {
+        return sin(orientationAngle * M_PI / 180);
+    }
+
+    double getZDir() {
+        return cos(orientationAngle * M_PI / 180);
+    }
+    void setCamera(Camera& camera, int camIndex) {
+        camIndex = camIndex % 2;
+        if(camIndex == 1) {
+                float3 eye = position;
+                eye.x += (float) getXDir() * 30;
+                eye.y += 10;
+                eye.z += (float) getZDir() * 30;
+                camera.setEye(eye);
+
+                float3 ahead = (float3((float) getXDir(), 0, (float) getZDir())).normalize();
+                camera.setAhead(ahead);
+        }
     }
 
 
@@ -154,6 +201,8 @@ class Scene {
     std::vector<Material *> materials;
     std::vector<Billboard *> billboards;
     Object *plane;
+    HeliCam *activeHeliCam;
+    int heliCamIndex = 0;
 
 
 public:
@@ -189,7 +238,9 @@ public:
 //        objects.push_back((new Teapot(basicMaterial))->translate(float3(0, 1.2, 0.5))->scale(float3(1.3, 1.3, 1.3)));
 //
         TexturedMaterial* smoke = new TexturedMaterial("smoke.png");
-        objects.push_back(new Helicopter(yellowDiffuseMaterial));
+        Helicopter* heli = new Helicopter(yellowDiffuseMaterial);
+        activeHeliCam = heli;
+        objects.push_back(heli);
         Bullet* bullet = new Bullet(yellowDiffuseMaterial, new Mesh("bullet.obj"));
         bullet->rotate(M_PI/2);
         bullet->setParticleMaterial(smoke);
@@ -203,6 +254,11 @@ public:
     }
 
     bool control(std::vector<bool> &keysPressed) {
+        if(keysPressed.at('v'))
+            heliCamIndex++;
+        else if(keysPressed.at('c'))
+            heliCamIndex--;
+
         std::vector<Object *> spawn = std::vector<Object *>();
         std::vector<Billboard *> spawnBillboard = std::vector<Billboard *>();
 
@@ -262,6 +318,7 @@ public:
 
     void draw() {
         camera.apply();
+        activeHeliCam->setCamera(camera, heliCamIndex);
 
         unsigned int iLightSource = 0;
         for (; iLightSource < lightSources.size(); iLightSource++) {

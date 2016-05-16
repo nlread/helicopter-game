@@ -31,6 +31,26 @@ public:
         return eye;
     }
 
+    float3 getAhead() {
+        return ahead;
+    }
+
+    float3 getRight() {
+        return this->right;
+    }
+
+    void setEye(float3 eye) {
+        this->eye = eye;
+    }
+
+    void setAhead(float3 ahead) {
+        this->ahead = ahead;
+    }
+
+    void setRight(float3 right) {
+        this->right = right;
+    }
+
     Camera();
 
     void apply();

@@ -8,7 +8,7 @@
 
 #include <GL/gl.h>
 #include "../../Utility/float3.h"
-#include "../Object.h"
+#include "../General/Object.h"
 
 class Ground : public Object {
 

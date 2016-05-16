@@ -9,7 +9,7 @@
 
 #include <vector>
 #include "../../Utility/float3.h"
-#include "../Object.h"
+#include "../General/Object.h"
 
 class Mover {
 protected:
