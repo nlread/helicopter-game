@@ -18,6 +18,7 @@ public:
     float3 scaleFactor;
     float3 position;
     float3 orientationAxis;
+    float forwardTilt;
     float orientationAngle;
 
     Object(Material *material) : material(material), orientationAngle(0.0f), scaleFactor(1.0, 1.0, 1.0),
@@ -49,6 +50,8 @@ public:
                          std::vector<Object *> &objects, std::vector<Billboard *> &spawnBillboard) { return false; }
 
     virtual void drawShadow(float3 lightDir);
+
+    Object *tilt(float angle);
 };
 
 #endif //INC_3DOPENGL_OBJECT_H

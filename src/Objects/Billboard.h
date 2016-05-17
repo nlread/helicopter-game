@@ -12,7 +12,7 @@
 #include "../Materials/Material.h"
 #include "Properties/LifeSpan.h"
 
-class Billboard : public LifeSpan{
+class Billboard : public LifeSpan {
 protected:
     Material *material;
     double fadeOut = 1;

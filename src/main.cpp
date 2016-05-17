@@ -45,11 +45,15 @@ protected:
     MeshInstance *body;
     MeshInstance *mainRotor;
     MeshInstance *tailRotor;
-    double forwardTilt;
     bool playingSound = false;
     bool engineOn = false;
     bool mayToggleEngine = true;
     bool soundPlaying = false;
+    float tiltLimit = 13;
+    double bulletDelay = .5;
+    double timeSinceBullet = 0;
+    Mesh *bulletMesh;
+    Material *bulletMaterial;
 
 public:
     Helicopter(Material *material) : ObjectCollection(material) {
@@ -67,50 +71,43 @@ public:
         addObject(body);
         addObject(mainRotor);
         addObject(tailRotor);
-    }
 
-    virtual void draw() {
-        glPushMatrix();
-        {
-            ObjectCollection::draw();
-            orientationAxis = float3(1, 0, 0);
-            glRotatef(forwardTilt, orientationAxis.x, orientationAxis.y, orientationAxis.z);
-            orientationAxis = float3(0, 1, 0);
-        }
-        glPopMatrix();
-     }
+        bulletMesh = new Mesh("bullet.obj");
+        bulletMaterial = new Material();
+        drag = float3(.5, .5, .5);
+
+    }
 
     void move(double t, double dt) {
         if (engineOn) {
             mainRotor->orientationAngle += 20;
             tailRotor->orientationAngle += 20;
 
-            if(!soundPlaying) {
-                PlaySound(TEXT("sounds/coploop5.wav"), NULL ,SND_FILENAME | SND_ASYNC | SND_LOOP);
+            if (!soundPlaying) {
+                PlaySound(TEXT("sounds/helicopter.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
                 soundPlaying = true;
             }
         } else {
-            if(soundPlaying) {
+            if (soundPlaying) {
                 PlaySound(NULL, 0, SND_ASYNC);
                 soundPlaying = false;
             }
         }
 
+        timeSinceBullet += dt;
         applyAcceleration(t, dt);
         float3 dPosition = calcDeltaPosition(position, t, dt);
         float dOrientationAngle = calcDeltaOrientation(orientationAngle, t, dt);
+        float dTilt = calcDeltaTilt(forwardTilt, t, dt);
         translate(dPosition);
         rotate(dOrientationAngle);
+        if (!(forwardTilt > tiltLimit && dTilt > 0 || forwardTilt < -tiltLimit && dTilt < 0))
+            tilt(dTilt);
     }
 
     virtual bool control(std::vector<bool> &keysPressed, std::vector<Object *> &spawn,
                          std::vector<Object *> &objects, std::vector<Billboard *> &spawnBillboard) {
         if (keysPressed.at('p')) {
-            if (!playingSound) {
-//                PlaySound(TEXT("test.wav"), NULL, SND_FILENAME | SND_ASYNC);
-//                //getchar();
-//                playingSound = true;
-            }
             if (mayToggleEngine) {
                 engineOn = !engineOn;
                 mayToggleEngine = false;
@@ -121,9 +118,9 @@ public:
 
         if (engineOn) {
             if (keysPressed.at('y')) {
-                acceleration.y = -gravity.y + 5;
+                acceleration.y = -gravity.y + 15;
             } else if (keysPressed.at('i')) {
-                acceleration.y = -gravity.y - 5;
+                acceleration.y = -gravity.y - 15;
             } else {
                 acceleration.y = -gravity.y;
             }
@@ -131,60 +128,124 @@ public:
             acceleration.y = 0;
         }
 
-        //Rotate
-        if (keysPressed.at('h')) {
+        handleRotation(keysPressed.at('h'), keysPressed.at('k'));
+
+        handleXZMovement(keysPressed.at('u'), keysPressed.at('j'));
+
+        handleShooting(keysPressed.at(' '), spawn);
+        if(keysPressed.at(' '))
+            createSmokeScreen(spawnBillboard);
+        return false;
+    }
+
+    void handleRotation(bool rotateLeft, bool rotateRight) {
+        if (rotateLeft) {
             angularAcceleration = 100;
-        } else if (keysPressed.at('k')) {
+        } else if (rotateRight) {
             angularAcceleration = -100;
         } else {
             angularAcceleration = 0;
         }
+    }
 
-        //x and z controls
-        if (keysPressed.at('u')) {
-            acceleration.x = (float) (getXDir() * 10);
-            acceleration.z = (float) (getZDir() * 10);
-            forwardTilt = 20;
-        } else if (keysPressed.at('j')) {
-            acceleration.x = (float) (-getXDir() * 10);
-            acceleration.z = (float) (-getZDir() * 10);
+    void handleXZMovement(bool moveForward, bool moveBackward) {
+        if (moveForward) {
+            acceleration.x = (float) (getXDir() * 20);
+            acceleration.z = (float) (getZDir() * 20);
+            tiltVelocity = 8;
+        } else if (moveBackward) {
+            acceleration.x = (float) (-getXDir() * 20);
+            acceleration.z = (float) (-getZDir() * 20);
+            tiltVelocity = -8;
         } else {
             acceleration.x = 0;
             acceleration.z = 0;
-        }
-
-        if (keysPressed.at(' ')) {
-            Material *smoke = new TexturedMaterial("smoke1.png");
-            for (double i = 0; i < M_PI * 2; i += .4) {
-                Billboard *b = new Billboard(position + mainRotorOffset, smoke);
-                b->scale(float3(3, 3, 3));
-                b->setVelocity(float3(-cos(i) * 4, 0, sin(i) * 4));
-                b->setLifeSpan(3, 2);
-                spawnBillboard.push_back(b);
+            if (std::abs(forwardTilt) < 1) {
+                tiltVelocity = 0;
+            } else if (forwardTilt > 0) {
+                tiltVelocity = -6;
+            } else {
+                tiltVelocity = 6;
             }
-            PlaySound(TEXT("sounds/machgun2.wav"), NULL, SND_ASYNC);
         }
-        return false;
     }
 
-    double getXDir() {
-        return sin(orientationAngle * M_PI / 180);
+    void handleShooting(bool attemptShoot, std::vector<Object *> &spawn) {
+        if (attemptShoot) {
+            if (timeSinceBullet > bulletDelay) {
+                Bullet* b = createBullet();
+                spawn.push_back(b);
+                timeSinceBullet = 0;
+            }
+            // PlaySound(TEXT("sounds/machgun2.wav"), NULL, SND_ASYNC);
+        }
     }
 
-    double getZDir() {
-        return cos(orientationAngle * M_PI / 180);
+    Bullet* createBullet() {
+        Bullet *b = new Bullet(bulletMaterial, bulletMesh);
+        b->position = getLocationInFront(15);
+        b->position.y += 5;
+        b->orientationAngle = this->orientationAngle;
+        b->setVelocity(float3(getXDir(), getYDir(), getZDir()).normalize() * 50);
+        b->setScaleFactor(float3(.5, .5, .5));
+        b->forwardTilt = forwardTilt;
+        return b;
     }
-    void setCamera(Camera& camera, int camIndex) {
-        camIndex = camIndex % 2;
-        if(camIndex == 1) {
-                float3 eye = position;
-                eye.x += (float) getXDir() * 30;
-                eye.y += 10;
-                eye.z += (float) getZDir() * 30;
-                camera.setEye(eye);
 
-                float3 ahead = (float3((float) getXDir(), 0, (float) getZDir())).normalize();
-                camera.setAhead(ahead);
+    float3 getLocationInFront(float distance) {
+        return getDistanceInFront(distance) + position;
+
+    }
+
+    float3 getDistanceInFront(float distance) {
+        return getDir() * distance;
+    }
+
+    void createSmokeScreen(std::vector<Billboard *> &spawnBillboard) {
+        Material *smoke = new TexturedMaterial("smoke1.png");
+        for (double i = 0; i < M_PI * 2; i += .4) {
+            Billboard *b = new Billboard(position + mainRotorOffset, smoke);
+            b->scale(float3(8, 8, 8));
+            b->setVelocity(float3(-cos(i) * 7, 0, sin(i) * 7));
+            b->setLifeSpan(6, 2);
+            spawnBillboard.push_back(b);
+        }
+    }
+
+    float getXDir() {
+        return (float) sin(orientationAngle * M_PI / 180);
+    }
+
+    float getYDir() {
+        return (float) (-forwardTilt / 180);
+    }
+
+    float getZDir() {
+        return (float) cos(orientationAngle * M_PI / 180);
+    }
+
+    float3 getDir() {
+        return float3(getXDir(), getYDir(), getZDir()).normalize();
+    }
+
+    void setCamera(Camera &camera, int camIndex) {
+        camIndex = camIndex % 3;
+        if (camIndex == 1) {
+            float3 eye = getLocationInFront(25);
+            eye.y += 10;
+            camera.setEye(eye);
+
+            float3 ahead = getDir();
+            camera.setAhead(ahead);
+        } else if (camIndex == 2) {
+            float3 eye = position;
+            eye.x -= getXDir() * 100;
+            eye.y += 35;
+            eye.z -= getZDir() * 100;
+            camera.setEye(eye);
+
+            float3 ahead = float3(getXDir(), 0, getYDir()).normalize();
+            camera.setAhead(ahead);
         }
     }
 
@@ -203,6 +264,7 @@ class Scene {
     Object *plane;
     HeliCam *activeHeliCam;
     int heliCamIndex = 0;
+    bool heliButtonReleased = true;
 
 
 public:
@@ -237,15 +299,11 @@ public:
 //        objects.push_back((new Teapot(tiggerTexture))->translate(float3(0, -1, -2))->scale(float3(0.5, 0.5, 0.5)));
 //        objects.push_back((new Teapot(basicMaterial))->translate(float3(0, 1.2, 0.5))->scale(float3(1.3, 1.3, 1.3)));
 //
-        TexturedMaterial* smoke = new TexturedMaterial("smoke.png");
-        Helicopter* heli = new Helicopter(yellowDiffuseMaterial);
+        TexturedMaterial *smoke = new TexturedMaterial("smoke.png");
+        Helicopter *heli = new Helicopter(yellowDiffuseMaterial);
         activeHeliCam = heli;
         objects.push_back(heli);
-        Bullet* bullet = new Bullet(yellowDiffuseMaterial, new Mesh("bullet.obj"));
-        bullet->rotate(M_PI/2);
-        bullet->setParticleMaterial(smoke);
-        objects.push_back(bullet);
-        Ground* ground = new Ground(grass);
+        Ground *ground = new Ground(grass);
         objects.push_back(ground);
     }
 
@@ -254,19 +312,31 @@ public:
     }
 
     bool control(std::vector<bool> &keysPressed) {
-        if(keysPressed.at('v'))
-            heliCamIndex++;
-        else if(keysPressed.at('c'))
-            heliCamIndex--;
-
+        if (keysPressed.at('v')) {
+            if (heliButtonReleased) {
+                heliCamIndex++;
+                heliButtonReleased = false;
+            }
+        } else if (keysPressed.at('c')) {
+            if (heliButtonReleased) {
+                heliCamIndex--;
+                heliButtonReleased = false;
+            }
+        } else {
+            heliButtonReleased = true;
+        }
         std::vector<Object *> spawn = std::vector<Object *>();
         std::vector<Billboard *> spawnBillboard = std::vector<Billboard *>();
 
-        for (int i = 0; i < objects.size(); i++) {
+        for (unsigned int i = 0; i < objects.size(); i++) {
             objects.at(i)->control(keysPressed, spawn, objects, spawnBillboard);
         }
 
-        for (int i = 0; i < spawnBillboard.size(); i++) {
+        for (unsigned int i = 0; i < spawn.size(); i++) {
+            objects.push_back(spawn.at(i));
+        }
+
+        for (unsigned int i = 0; i < spawnBillboard.size(); i++) {
             billboards.push_back(spawnBillboard.at(i));
         }
         return false;
@@ -284,7 +354,7 @@ public:
                 toRemoveBillboard.push_back(i);
             }
         }
-        for(int i=0; i<toRemoveBillboard.size(); i++) {
+        for (int i = 0; i < toRemoveBillboard.size(); i++) {
             int index = toRemoveBillboard.at(i) - i;
             delete billboards.at(index);
             billboards.erase(billboards.begin() + index);
@@ -340,8 +410,9 @@ public:
         glEnable(GL_LIGHTING);
         glEnable(GL_TEXTURE_2D);
 
-        for (unsigned int iBill = 0; iBill < billboards.size(); iBill++)
+        for (unsigned int iBill = 0; iBill < billboards.size(); iBill++) {
             billboards.at(iBill)->draw(camera);
+        }
     }
 
 };

@@ -2,6 +2,7 @@
 // Created by Ned on 5/14/2016.
 //
 
+#include <stdio.h>
 #include "Billboard.h"
 
 void Billboard::draw(Camera &camera) {
@@ -14,33 +15,33 @@ void Billboard::draw(Camera &camera) {
     material->apply();
 
     glPushMatrix();
-
-    glTranslatef(position.x, position.y, position.z);
-    glScalef(scaleFactor.x, scaleFactor.y, scaleFactor.z);
-    float camRotation[] = {
-            camera.right.x, camera.right.y, camera.right.z, 0,
-            camera.up.x, camera.up.y, camera.up.z, 0,
-            camera.ahead.x, camera.ahead.y, camera.ahead.z, 0,
-            0, 0, 0, 1
-    };
-    glMultMatrixf(camRotation);
-    glScalef(4, 4, 4);
-    glColor4d(1, 1, 1, transparency);
-    glBegin(GL_QUADS);
     {
-        glTexCoord3d(0, 0, 0);
-        glVertex3d(-1, -1, 0);
+        glTranslatef(position.x, position.y, position.z);
+        glScalef(scaleFactor.x, scaleFactor.y, scaleFactor.z);
+        float camRotation[] = {
+                camera.right.x, camera.right.y, camera.right.z, 0,
+                camera.up.x, camera.up.y, camera.up.z, 0,
+                camera.ahead.x, camera.ahead.y, camera.ahead.z, 0,
+                0, 0, 0, 1
+        };
+        glMultMatrixf(camRotation);
+        glColor4d(1, 1, 1, transparency);
+        glBegin(GL_QUADS);
+        {
+            glTexCoord3d(0, 0, 0);
+            glVertex3d(-1, -1, 0);
 
-        glTexCoord3d(1, 0, 0);
-        glVertex3d(1, -1, 0);
+            glTexCoord3d(1, 0, 0);
+            glVertex3d(1, -1, 0);
 
-        glTexCoord3d(1, 1, 0);
-        glVertex3d(1, 1, 0);
+            glTexCoord3d(1, 1, 0);
+            glVertex3d(1, 1, 0);
 
-        glTexCoord3d(0, 1, 0);
-        glVertex3d(-1, 1, 0);
+            glTexCoord3d(0, 1, 0);
+            glVertex3d(-1, 1, 0);
+        }
+        glEnd();
     }
-    glEnd();
     glPopMatrix();
 
     glDepthMask(GL_TRUE);
@@ -57,7 +58,7 @@ bool Billboard::move(double t, double dt) {
     if(lifeSpan < fadeOut) {
         transparency = lifeSpan / fadeOut;
     }
-    return isAlive();
+    return !isAlive();
 }
 
 Billboard *Billboard::scale(float3 factor) {

@@ -20,7 +20,6 @@ protected:
 public:
     Bullet(Material *material, Mesh *mesh) : MeshInstance(material, mesh) {
         gravity = float3(0, 0, 0);
-        velocity.z = 10;
         drag = float3(1, 1, 1);
     }
 
@@ -50,6 +49,10 @@ public:
 
     void setParticleMaterial(TexturedMaterial* particleMaterial) {
         this->particleMaterial = particleMaterial;
+    }
+
+    void setScaleFactor(float3 scaleFactor) {
+        this->scaleFactor = scaleFactor;
     }
 
 

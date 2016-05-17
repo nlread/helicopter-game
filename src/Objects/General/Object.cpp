@@ -35,11 +35,17 @@ void Object::draw() {
 void Object::applyTransformations() {
     glTranslatef(position.x, position.y, position.z);
     glRotatef(orientationAngle, orientationAxis.x, orientationAxis.y, orientationAxis.z);
+    glRotatef((float)forwardTilt, 1, 0, 0);
     glScalef(scaleFactor.x, scaleFactor.y, scaleFactor.z);
 }
 
 Object *Object::rotate(float angle) {
     orientationAngle += angle;
+    return this;
+}
+
+Object *Object::tilt(float angle) {
+    forwardTilt += angle;
     return this;
 }
 
