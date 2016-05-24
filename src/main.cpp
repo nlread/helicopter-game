@@ -159,7 +159,6 @@ public:
             Object*o = objects.at(index);
             if(UFO * u = dynamic_cast<UFO*>(o)) {
                 ufosDestroyed++;
-                printf("DOG\n");
             }
             delete objects.at(index);
             objects.erase(objects.begin() + index);

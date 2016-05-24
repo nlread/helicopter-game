@@ -6,7 +6,7 @@
 #define INC_3DOPENGL_EFFECTMANAGER_H
 
 
-#include <bits/stl_bvector.h>
+#include <vector>
 #include "../../Utility/DelayedEffect.h"
 
 class EffectManager {
@@ -18,6 +18,10 @@ public:
         for(unsigned int i=0; i<delayedEffects.size(); i++) {
             delayedEffects.at(i)->timePassed(dt);
         }
+    }
+
+    void addDelayedEffect(DelayedEffect* de) {
+        delayedEffects.push_back(de);
     }
 };
 

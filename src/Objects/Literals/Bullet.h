@@ -52,7 +52,6 @@ public:
             if (UFO *u = dynamic_cast<UFO *>(o)) {
                 if (this->intersectsWith(u)) {
                     u->wasShot();
-                    printf("collides\n");
                     return true;
                 }
 
