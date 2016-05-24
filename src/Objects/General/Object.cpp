@@ -8,7 +8,7 @@ void Object::drawShadow(float3 lightDir) {
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     {
-        glTranslatef(0, .01, 0);
+        glTranslatef(0, .1, 0);
         glScalef(1, 0, 1);
 
         glTranslatef(position.x, position.y, position.z);

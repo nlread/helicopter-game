@@ -26,245 +26,38 @@
 #include "Lighting/PointLight.h"
 #include "Lighting/DirectionalLight.h"
 #include "Objects/Literals/Ground.h"
-#include "Objects/Literals/Teapot.h"
 #include "Objects/Properties/Mover.h"
-#include "Objects/Literals/Bullet.h"
-#include "Objects/Properties/HeliCam.h"
+#include "Objects/Literals/Helicopter.h"
+#include "Objects/Literals/UFO.h"
 #include <vector>
 #include <map>
 #include <stdio.h>
 #include <algorithm>
+#include <time.h>
 
 extern "C" unsigned char *stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp);
 float3 gravity = float3(0, -9.8, 0);
 
-class Helicopter : public ObjectCollection, public Mover, public HeliCam {
-protected:
-    float3 mainRotorOffset = float3(0, 15, 4.5);
-
-    MeshInstance *body;
-    MeshInstance *mainRotor;
-    MeshInstance *tailRotor;
-    bool playingSound = false;
-    bool engineOn = false;
-    bool mayToggleEngine = true;
-    bool soundPlaying = false;
-    float tiltLimit = 13;
-    double bulletDelay = .5;
-    double timeSinceBullet = 0;
-    Mesh *bulletMesh;
-    Material *bulletMaterial;
-
-public:
-    Helicopter(Material *material) : ObjectCollection(material) {
-        Mesh *bodyMesh = new Mesh("heli.obj");
-        Mesh *mainRotorMesh = new Mesh("mainrotor.obj");
-        Mesh *tailRotorMesh = new Mesh("tailrotor.obj");
-
-        body = new MeshInstance(material, bodyMesh);
-        mainRotor = new MeshInstance(material, mainRotorMesh);
-        tailRotor = new MeshInstance(material, tailRotorMesh);
-
-        mainRotor->translate(float3(0, 15, 4.5f));
-        tailRotor->translate(float3(.5, 15, -36));
-        tailRotor->orientationAxis = (float3(1, 0, 0));
-        addObject(body);
-        addObject(mainRotor);
-        addObject(tailRotor);
-
-        bulletMesh = new Mesh("bullet.obj");
-        bulletMaterial = new Material();
-        drag = float3(.5, .5, .5);
-
-    }
-
-    void move(double t, double dt) {
-        if (engineOn) {
-            mainRotor->orientationAngle += 20;
-            tailRotor->orientationAngle += 20;
-
-            if (!soundPlaying) {
-                PlaySound(TEXT("sounds/helicopter.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
-                soundPlaying = true;
-            }
-        } else {
-            if (soundPlaying) {
-                PlaySound(NULL, 0, SND_ASYNC);
-                soundPlaying = false;
-            }
-        }
-
-        timeSinceBullet += dt;
-        applyAcceleration(t, dt);
-        float3 dPosition = calcDeltaPosition(position, t, dt);
-        float dOrientationAngle = calcDeltaOrientation(orientationAngle, t, dt);
-        float dTilt = calcDeltaTilt(forwardTilt, t, dt);
-        translate(dPosition);
-        rotate(dOrientationAngle);
-        if (!(forwardTilt > tiltLimit && dTilt > 0 || forwardTilt < -tiltLimit && dTilt < 0))
-            tilt(dTilt);
-    }
-
-    virtual bool control(std::vector<bool> &keysPressed, std::vector<Object *> &spawn,
-                         std::vector<Object *> &objects, std::vector<Billboard *> &spawnBillboard) {
-        if (keysPressed.at('p')) {
-            if (mayToggleEngine) {
-                engineOn = !engineOn;
-                mayToggleEngine = false;
-            }
-        } else {
-            mayToggleEngine = true;
-        }
-
-        if (engineOn) {
-            if (keysPressed.at('y')) {
-                acceleration.y = -gravity.y + 15;
-            } else if (keysPressed.at('i')) {
-                acceleration.y = -gravity.y - 15;
-            } else {
-                acceleration.y = -gravity.y;
-            }
-        } else {
-            acceleration.y = 0;
-        }
-
-        handleRotation(keysPressed.at('h'), keysPressed.at('k'));
-
-        handleXZMovement(keysPressed.at('u'), keysPressed.at('j'));
-
-        handleShooting(keysPressed.at(' '), spawn);
-        if(keysPressed.at(' '))
-            createSmokeScreen(spawnBillboard);
-        return false;
-    }
-
-    void handleRotation(bool rotateLeft, bool rotateRight) {
-        if (rotateLeft) {
-            angularAcceleration = 100;
-        } else if (rotateRight) {
-            angularAcceleration = -100;
-        } else {
-            angularAcceleration = 0;
-        }
-    }
-
-    void handleXZMovement(bool moveForward, bool moveBackward) {
-        if (moveForward) {
-            acceleration.x = (float) (getXDir() * 20);
-            acceleration.z = (float) (getZDir() * 20);
-            tiltVelocity = 8;
-        } else if (moveBackward) {
-            acceleration.x = (float) (-getXDir() * 20);
-            acceleration.z = (float) (-getZDir() * 20);
-            tiltVelocity = -8;
-        } else {
-            acceleration.x = 0;
-            acceleration.z = 0;
-            if (std::abs(forwardTilt) < 1) {
-                tiltVelocity = 0;
-            } else if (forwardTilt > 0) {
-                tiltVelocity = -6;
-            } else {
-                tiltVelocity = 6;
-            }
-        }
-    }
-
-    void handleShooting(bool attemptShoot, std::vector<Object *> &spawn) {
-        if (attemptShoot) {
-            if (timeSinceBullet > bulletDelay) {
-                Bullet* b = createBullet();
-                spawn.push_back(b);
-                timeSinceBullet = 0;
-            }
-            // PlaySound(TEXT("sounds/machgun2.wav"), NULL, SND_ASYNC);
-        }
-    }
-
-    Bullet* createBullet() {
-        Bullet *b = new Bullet(bulletMaterial, bulletMesh);
-        b->position = getLocationInFront(15);
-        b->position.y += 5;
-        b->orientationAngle = this->orientationAngle;
-        b->setVelocity(float3(getXDir(), getYDir(), getZDir()).normalize() * 50);
-        b->setScaleFactor(float3(.5, .5, .5));
-        b->forwardTilt = forwardTilt;
-        return b;
-    }
-
-    float3 getLocationInFront(float distance) {
-        return getDistanceInFront(distance) + position;
-
-    }
-
-    float3 getDistanceInFront(float distance) {
-        return getDir() * distance;
-    }
-
-    void createSmokeScreen(std::vector<Billboard *> &spawnBillboard) {
-        Material *smoke = new TexturedMaterial("smoke1.png");
-        for (double i = 0; i < M_PI * 2; i += .4) {
-            Billboard *b = new Billboard(position + mainRotorOffset, smoke);
-            b->scale(float3(8, 8, 8));
-            b->setVelocity(float3(-cos(i) * 7, 0, sin(i) * 7));
-            b->setLifeSpan(6, 2);
-            spawnBillboard.push_back(b);
-        }
-    }
-
-    float getXDir() {
-        return (float) sin(orientationAngle * M_PI / 180);
-    }
-
-    float getYDir() {
-        return (float) (-forwardTilt / 180);
-    }
-
-    float getZDir() {
-        return (float) cos(orientationAngle * M_PI / 180);
-    }
-
-    float3 getDir() {
-        return float3(getXDir(), getYDir(), getZDir()).normalize();
-    }
-
-    void setCamera(Camera &camera, int camIndex) {
-        camIndex = camIndex % 3;
-        if (camIndex == 1) {
-            float3 eye = getLocationInFront(25);
-            eye.y += 10;
-            camera.setEye(eye);
-
-            float3 ahead = getDir();
-            camera.setAhead(ahead);
-        } else if (camIndex == 2) {
-            float3 eye = position;
-            eye.x -= getXDir() * 100;
-            eye.y += 35;
-            eye.z -= getZDir() * 100;
-            camera.setEye(eye);
-
-            float3 ahead = float3(getXDir(), 0, getYDir()).normalize();
-            camera.setAhead(ahead);
-        }
-    }
-
-
-};
-
-//endregion
 
 
 class Scene {
     Camera camera;
+    int dog = (int) M_PI;
     std::vector<LightSource *> lightSources;
     std::vector<Object *> objects;
     std::vector<Material *> materials;
     std::vector<Billboard *> billboards;
-    Object *plane;
+    Helicopter *helicopter;
     HeliCam *activeHeliCam;
+    Mesh* ufoMesh;
+    Material * ufoMaterial;
     int heliCamIndex = 0;
     bool heliButtonReleased = true;
+    double timeSinceUFOSpawn = 0;
+    double ufoSpawnDelay = 10;
+    double ufoSpawnDelayBase = 10;
+    double ufoSpeed = 4;
+    double ufosDestroyed = 0;
 
 
 public:
@@ -274,7 +67,7 @@ public:
         lightSources.push_back(
                 new DirectionalLight(
                         float3(0, 1, 0),
-                        float3(1, 0.5, 1)));
+                        float3(1, 1, 1)));
         lightSources.push_back(
                 new PointLight(
                         float3(-1, -1, 1),
@@ -283,28 +76,44 @@ public:
 
         //region Materials
         Material *yellowDiffuseMaterial = new Material();
-        yellowDiffuseMaterial->kd = float3(1, 1, 0);
-//        Material *tiggerTexture = new TexturedMaterial("tigger.png", GL_LINEAR);
-        Material *basicMaterial = new Material();
+        yellowDiffuseMaterial->kd = float3(1, .65, 0);
+
+        Material* ufoSilver = new Material();
+        ufoSilver->kd = float3(.6, .6, .6);
+        ufoMaterial = ufoSilver;
+
         Material *grass = new Material();
         grass->kd = float3(0, .6, 0);
 
+        materials.push_back(ufoSilver);
         materials.push_back(grass);
         materials.push_back(yellowDiffuseMaterial);
-//        materials.push_back(tiggerTexture);
-        materials.push_back(basicMaterial);
         //endregion
 
-//        objects.push_back((new Teapot(yellowDiffuseMaterial))->translate(float3(0, -1, 0)));
-//        objects.push_back((new Teapot(tiggerTexture))->translate(float3(0, -1, -2))->scale(float3(0.5, 0.5, 0.5)));
-//        objects.push_back((new Teapot(basicMaterial))->translate(float3(0, 1.2, 0.5))->scale(float3(1.3, 1.3, 1.3)));
-//
-        TexturedMaterial *smoke = new TexturedMaterial("smoke.png");
-        Helicopter *heli = new Helicopter(yellowDiffuseMaterial);
-        activeHeliCam = heli;
-        objects.push_back(heli);
+        TexturedMaterial *smoke = new TexturedMaterial("smoke1.png");
+        Mesh *bodyMesh = new Mesh("heli.obj");
+        Mesh *mainRotorMesh = new Mesh("mainrotor.obj");
+        Mesh *tailRotorMesh = new Mesh("tailrotor.obj");
+        helicopter = new Helicopter(yellowDiffuseMaterial, bodyMesh, mainRotorMesh, tailRotorMesh);
+        helicopter->translate(float3(0, 10, 0));
+        activeHeliCam = helicopter;
+        heliCamIndex = 2;
+        objects.push_back(helicopter);
         Ground *ground = new Ground(grass);
         objects.push_back(ground);
+
+        ufoMesh = new Mesh("Flying Disk/flying Disk flying.obj");
+        UFO* ufo = createUFO(float3(0, 150, 0));
+        objects.push_back(ufo);
+    }
+
+    UFO* createUFO(float3 position) {
+        UFO* ufo = new UFO(ufoMaterial, ufoMesh);
+        //ufo->translate(float3(0, 150, 0));
+        ufo->position = position;
+        ufo->scale(float3(.05, .05, .05));
+        ufo->setTarget(helicopter);
+        return ufo;
     }
 
     void addObject(Object *object) {
@@ -327,9 +136,33 @@ public:
         }
         std::vector<Object *> spawn = std::vector<Object *>();
         std::vector<Billboard *> spawnBillboard = std::vector<Billboard *>();
+        std::vector<int> deadIndices = std::vector<int>();
+
+        if(timeSinceUFOSpawn > ufoSpawnDelay) {
+            ufoSpawnDelay = ufoSpawnDelayBase - sqrt(ufosDestroyed);
+            timeSinceUFOSpawn = 0;
+
+
+            UFO * newUFO = createUFO(float3(rand() % 300, rand() % 150 + 20, rand() % 300));
+            newUFO->setSpeed(ufoSpeed + sqrt(ufosDestroyed));
+            spawn.push_back(newUFO);
+        }
 
         for (unsigned int i = 0; i < objects.size(); i++) {
-            objects.at(i)->control(keysPressed, spawn, objects, spawnBillboard);
+            bool dead = objects.at(i)->control(keysPressed, spawn, objects, spawnBillboard);
+            if(dead)
+                deadIndices.push_back(i);
+        }
+
+        for (unsigned int i=0; i<deadIndices.size(); i++) {
+            int index = deadIndices.at(i) - i;
+            Object*o = objects.at(index);
+            if(UFO * u = dynamic_cast<UFO*>(o)) {
+                ufosDestroyed++;
+                printf("DOG\n");
+            }
+            delete objects.at(index);
+            objects.erase(objects.begin() + index);
         }
 
         for (unsigned int i = 0; i < spawn.size(); i++) {
@@ -344,6 +177,7 @@ public:
     }
 
     void move(double t, double dt) {
+        timeSinceUFOSpawn += dt;
         for (int i = 0; i < objects.size(); i++) {
             objects.at(i)->move(t, dt);
         }
@@ -422,6 +256,7 @@ std::vector<bool> keysPressed;
 
 void onDisplay() {
     glClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+//    glClearColor(1, 1, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear screen
 
     scene.draw();
@@ -469,6 +304,8 @@ void onReshape(int winWidth, int winHeight) {
 }
 
 int main(int argc, char **argv) {
+    srand (time(NULL));
+
     glutInit(&argc, argv);                        // initialize GLUT
     glutInitWindowSize(600, 600);                // startup window size
     glutInitWindowPosition(100, 100);           // where to put window on screen

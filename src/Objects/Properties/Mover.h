@@ -32,6 +32,7 @@ public:
     float calcDeltaOrientation(float oldOrientation, double t, double dt);
 
     float calcDeltaTilt(float oldTilt, double t, double dt);
+
     bool control(std::vector<bool> &keysPressed, std::vector<Object *> &spawn,
                  std::vector<Object *> &objects);
 
