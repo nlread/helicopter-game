@@ -18,13 +18,7 @@ void UFO::move(double t, double dt) {
 
 bool  UFO::control(std::vector<bool> &keysPressed, std::vector<Object *> &spawn,
                           std::vector<Object *> &objects, std::vector<Billboard *> &spawnBillboard) {
-    for(unsigned int i=0; i<objects.size(); i++) {
-        Object* o = objects.at(i);
-//            if(Helicopter* h = dynamic_cast<Helicopter *>(o)) {
-//                h->wasShot();
-//                return true;
-//            }
-    }
+
     return dead;
 }
 

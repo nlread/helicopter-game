@@ -11,12 +11,14 @@
 #include "../General/MeshInstance.h"
 #include "../Properties/Collidable.h"
 #include "../../Materials/TexturedMaterial.h"
+#include "../../Utility/DelayedEffect.h"
 
-class UFO : public MeshInstance, public Mover, public Seeker, public Collidable {
+class UFO : public MeshInstance, public Mover, public Seeker, public Collidable, public EffectManager {
 protected:
     bool dead = false;
     float speed = 4;
     static Material* exhaust = nullptr;
+    DelayedEffect exhaustDelay = DelayedEffect(.75);
 public:
     UFO(Material *material, Mesh *mesh) : MeshInstance(material, mesh) {
         this->radius = 15;
