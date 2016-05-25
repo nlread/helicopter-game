@@ -25,7 +25,7 @@ public:
     UFO(Material *material, Mesh *mesh) : MeshInstance(material, mesh) {
         this->radius = 15;
         if(!exhaustCreated) {
-            exhaustMaterial = new TexturedMaterial("bullet2.png");
+            exhaustMaterial = new TexturedMaterial("exhaust.png");
             exhaustCreated = true;
         }
         addDelayedEffect(exhaustDelay);
@@ -38,13 +38,9 @@ public:
 
     Billboard* createExhaust();
 
-    float3 getCenter() {
-        return this->position;
-    }
+    float3 getCenter();
 
-    void wasShot() {
-            dead  = true;
-    }
+    void wasShot();
 
     void setSpeed(double speed);
 };
