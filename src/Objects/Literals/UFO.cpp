@@ -31,9 +31,9 @@ bool  UFO::control(std::vector<bool> &keysPressed, std::vector<Object *> &spawn,
 
 Billboard *UFO::createExhaust() {
     Billboard *exhaust = new Billboard(getCenter() + float3(0, 5, 0), exhaustMaterial);
-    exhaust->scale(float3(6, 6, 6));
+    exhaust->scale(float3(10, 10, 10));
     exhaust->setLifeSpan(3, 1);
-    exhaust->setVelocity(-velocity * 2);
+    exhaust->setVelocity(-velocity * 3);
 }
 
 void UFO::setSpeed(double speed) {
