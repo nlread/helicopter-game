@@ -105,9 +105,9 @@ void Helicopter::handleXZMovement(bool moveForward, bool moveBackward) {
 
 void Helicopter::handleRotation(bool rotateLeft, bool rotateRight) {
     if (rotateLeft) {
-        angularAcceleration = 100;
+        angularAcceleration = 120;
     } else if (rotateRight) {
-        angularAcceleration = -100;
+        angularAcceleration = -120;
     } else {
         angularAcceleration = 0;
     }

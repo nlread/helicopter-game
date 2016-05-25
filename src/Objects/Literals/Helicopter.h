@@ -25,7 +25,7 @@
 
 #define M_PI 3.1415926535
 
-class Helicopter : public ObjectCollection, public Mover, public HeliCam, public Collidable{
+class Helicopter : public ObjectCollection, public Mover, public HeliCam, public Collidable {
 protected:
     float3 mainRotorOffset = float3(0, 15, 4.5);
 
@@ -43,7 +43,7 @@ protected:
     Mesh *bulletMesh;
     Material *bulletMaterial;
 
-    TexturedMaterial* smoke;
+    TexturedMaterial *smoke;
     int health = 3;
     int maxHealth = 3;
     double damageParticleDelay = .6;
@@ -54,7 +54,8 @@ protected:
 
 
 public:
-    Helicopter(Material *material, Mesh* bodyMesh, Mesh* mainRotorMesh, Mesh* tailRotorMesh) : ObjectCollection(material) {
+    Helicopter(Material *material, Mesh *bodyMesh, Mesh *mainRotorMesh, Mesh *tailRotorMesh) : ObjectCollection(
+            material) {
 
 
         body = new MeshInstance(material, bodyMesh);
@@ -73,6 +74,7 @@ public:
         bulletMaterial->kd = float3(.3, .3, .3);
 
         drag = float3(.5, .5, .5);
+        angularDrag = .45;
         radius = 18;
 
         smoke = new TexturedMaterial("smoke1.png");
@@ -89,7 +91,7 @@ public:
 
     void handleXZMovement(bool moveForward, bool moveBackward);
 
-     Bullet * createBullet();
+    Bullet *createBullet();
 
     void handleShooting(bool attemptShoot, std::vector<Object *> &spawn);
 
