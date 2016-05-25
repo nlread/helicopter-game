@@ -139,12 +139,12 @@ public:
         std::vector<int> deadIndices = std::vector<int>();
 
         if(timeSinceUFOSpawn > ufoSpawnDelay) {
-            ufoSpawnDelay = ufoSpawnDelayBase - sqrt(ufosDestroyed);
+            ufoSpawnDelay = ufoSpawnDelayBase - sqrt(ufosDestroyed * 3);
             timeSinceUFOSpawn = 0;
 
 
             UFO * newUFO = createUFO(float3(rand() % 600 - 300, rand() % 150 + 20, rand() % 600 - 300));
-            newUFO->setSpeed(ufoSpeed + sqrt(ufosDestroyed));
+            newUFO->setSpeed(ufoSpeed + sqrt(ufosDestroyed * 5));
             spawn.push_back(newUFO);
         }
 
