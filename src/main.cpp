@@ -56,7 +56,7 @@ class Scene {
     double timeSinceUFOSpawn = 0;
     double ufoSpawnDelay = 10;
     double ufoSpawnDelayBase = 10;
-    double ufoSpeed = 4;
+    double ufoSpeed = 6;
     double ufosDestroyed = 0;
 
 
@@ -143,7 +143,7 @@ public:
             timeSinceUFOSpawn = 0;
 
 
-            UFO * newUFO = createUFO(float3(rand() % 300, rand() % 150 + 20, rand() % 300));
+            UFO * newUFO = createUFO(float3(rand() % 600 - 300, rand() % 150 + 20, rand() % 600 - 300));
             newUFO->setSpeed(ufoSpeed + sqrt(ufosDestroyed));
             spawn.push_back(newUFO);
         }
