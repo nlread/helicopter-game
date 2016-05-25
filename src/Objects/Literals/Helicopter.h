@@ -49,6 +49,9 @@ protected:
     double damageParticleDelay = .6;
     double timeSinceDamageParticle = 0;
 
+    double bladeVelocity = 0;
+    double bladeDrag = .7;
+
 
 public:
     Helicopter(Material *material, Mesh* bodyMesh, Mesh* mainRotorMesh, Mesh* tailRotorMesh) : ObjectCollection(material) {

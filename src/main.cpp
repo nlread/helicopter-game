@@ -56,7 +56,7 @@ class Scene {
     double timeSinceUFOSpawn = 0;
     double ufoSpawnDelay = 10;
     double ufoSpawnDelayBase = 10;
-    double ufoSpeed = 6;
+    double ufoSpeed = 8;
     double ufosDestroyed = 0;
 
 

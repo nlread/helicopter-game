@@ -5,21 +5,28 @@
 #include <math.h>
 #include "Helicopter.h"
 
+
 void Helicopter::move(double t, double dt) {
     if (engineOn) {
-        mainRotor->orientationAngle += 20;
-        tailRotor->orientationAngle += 20;
+        bladeVelocity = 800.0;
 
         if (!soundPlaying) {
             PlaySound(TEXT("sounds/helicopter.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
             soundPlaying = true;
         }
     } else {
+        bladeVelocity *= pow(bladeDrag, dt);
+        if(bladeVelocity < 4)
+            bladeVelocity = 0;
+
         if (soundPlaying) {
             PlaySound(NULL, 0, SND_ASYNC);
             soundPlaying = false;
         }
     }
+
+    mainRotor->orientationAngle +=  bladeVelocity * dt;
+    tailRotor->orientationAngle += bladeVelocity * dt;
 
     timeSinceBullet += dt;
     timeSinceDamageParticle += dt;
@@ -48,9 +55,9 @@ bool Helicopter::control(std::vector<bool> &keysPressed, std::vector<Object *> &
 
     if (engineOn) {
         if (keysPressed.at('y')) {
-            acceleration.y = -gravity.y + 15;
+            acceleration.y = -gravity.y + 20;
         } else if (keysPressed.at('i')) {
-            acceleration.y = -gravity.y - 15;
+            acceleration.y = -gravity.y - 20;
         } else {
             acceleration.y = -gravity.y;
         }
@@ -76,12 +83,12 @@ bool Helicopter::control(std::vector<bool> &keysPressed, std::vector<Object *> &
 
 void Helicopter::handleXZMovement(bool moveForward, bool moveBackward) {
     if (moveForward) {
-        acceleration.x = (float) (getXDir() * 20);
-        acceleration.z = (float) (getZDir() * 20);
+        acceleration.x = (float) (getXDir() * 25);
+        acceleration.z = (float) (getZDir() * 25);
         tiltVelocity = 8;
     } else if (moveBackward) {
-        acceleration.x = (float) (-getXDir() * 20);
-        acceleration.z = (float) (-getZDir() * 20);
+        acceleration.x = (float) (-getXDir() * 25);
+        acceleration.z = (float) (-getZDir() * 25);
         tiltVelocity = -8;
     } else {
         acceleration.x = 0;

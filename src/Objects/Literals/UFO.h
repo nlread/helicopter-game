@@ -20,6 +20,7 @@ protected:
     float speed = 4;
     static Material* exhaustMaterial;// = nullptr;
     static bool exhaustCreated;
+
     DelayedEffect* exhaustDelay = new DelayedEffect(.75);
 public:
     UFO(Material *material, Mesh *mesh) : MeshInstance(material, mesh) {
