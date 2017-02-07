@@ -36,9 +36,8 @@
 #include <time.h>
 
 extern "C" unsigned char *stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp);
+
 float3 gravity = float3(0, -9.8, 0);
-
-
 
 class Scene {
     Camera camera;
